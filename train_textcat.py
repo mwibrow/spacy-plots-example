@@ -82,6 +82,7 @@ def main(model=None, output_dir=None, n_iter=20, n_texts=2000, init_tok2vec=None
         # Set-up the plotter:
         if plot:
             plotter = Plotter(
+                title='IMDB Text categorisation training',
                 ylabels=["Loss", "Precision", "Recall", "F-score"],
                 iterations=n_iter,
                 figsize=(8, 8))

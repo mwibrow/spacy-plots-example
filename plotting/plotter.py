@@ -12,13 +12,13 @@ plt.style.use('ggplot')
 
 class Plotter:
     
-    def __init__(self, ylabels: List[str] = None, iterations: int = 1, **kwargs):
+    def __init__(self, ylabels: List[str] = None, title=None, iterations: int = 1, **kwargs):
         self.ylabels = ylabels or ['']
         self.iterations = iterations
         self.nplots = len(self.ylabels)
 
         fig, axs = plt.subplots(nrows=self.nplots, ncols=1, sharex=True, **kwargs)
-        
+        fig.suptitle(title)
         self.fig = fig
         self.axs = np.atleast_2d(axs)
         
@@ -42,7 +42,7 @@ class Plotter:
         """Draw the plot."""
         for i, ax in enumerate(self.fig.axes):
             ax.clear()
-            ax.set_xlim(0, self.iterations + 1)
+            ax.set_xlim(1, self.iterations)
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             ax.plot(self.x, self.y[i])
             ax.set_ylabel(self.ylabels[i])
