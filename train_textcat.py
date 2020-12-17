@@ -67,6 +67,7 @@ def main(model=None, output_dir=None, n_iter=20, n_texts=2000, init_tok2vec=None
         )
     )
     train_data = list(zip(train_texts, [{"cats": cats} for cats in train_cats]))
+    dev_data = list(zip(dev_texts, [{"cats": cats} for cats in dev_cats]))
 
     # get names of other pipes to disable them during training
     pipe_exceptions = ["textcat", "trf_wordpiecer", "trf_tok2vec"]
@@ -83,9 +84,9 @@ def main(model=None, output_dir=None, n_iter=20, n_texts=2000, init_tok2vec=None
         if plot:
             plotter = Plotter(
                 title='IMDB Text categorisation training',
-                ylabels=["Loss", "Precision", "Recall", "F-score"],
+                ylabels=["Train-loss", "Dev-loss", "Precision", "Recall", "F-score"],
                 iterations=n_iter,
-                figsize=(8, 8))
+                figsize=(8, 10))
 
         batch_sizes = compounding(4.0, 32.0, 1.001)
         for i in range(n_iter):
@@ -99,10 +100,19 @@ def main(model=None, output_dir=None, n_iter=20, n_texts=2000, init_tok2vec=None
             with textcat.model.use_params(optimizer.averages):
                 # evaluate on the dev data split off in load_data()
                 scores = evaluate(nlp.tokenizer, textcat, dev_texts, dev_cats)
+
+            dev_losses = {}
+            random.shuffle(dev_data)
+            batches = minibatch(dev_data, size=batch_sizes)
+            for batch in batches:
+                texts, annotations = zip(*batch)
+                nlp.update(texts, annotations, sgd=None, losses=dev_losses)
+            
             print(
                 "{0:.3f}\t{1:.3f}\t{2:.3f}\t{3:.3f}".format(  # print a simple table
                     losses["textcat"],
-                    scores["textcat_p"],
+                    dev_losses["textcat"],
+                    scores["textcat_p"], 
                     scores["textcat_r"],
                     scores["textcat_f"],
                 )
@@ -112,6 +122,7 @@ def main(model=None, output_dir=None, n_iter=20, n_texts=2000, init_tok2vec=None
             if plot:
                 plotter.update(y=[
                     losses["textcat"],
+                    dev_losses["textcat"],
                     scores["textcat_p"],
                     scores["textcat_r"],
                     scores["textcat_f"],
